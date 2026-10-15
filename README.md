@@ -1,0 +1,84 @@
+# runpod-self-hosting
+
+Self-host [WhiteRabbitNeo V3](https://huggingface.co/WhiteRabbitNeo/WhiteRabbitNeo-V3-7B) behind an
+**OpenAI-compatible API** using [SGLang](https://github.com/sgl-project/sglang) on a RunPod **H200** GPU.
+
+WhiteRabbitNeo-V3-7B is a Qwen2.5-Coder-7B–based cybersecurity model with a 32K context window
+(Apache-2.0). It weighs ~15 GB in bf16, so a single H200 (141 GB) runs it comfortably at `--tp 1`
+with room to spare for a long-context KV cache.
+
+Once running, SGLang exposes standard OpenAI routes — `/v1/chat/completions`, `/v1/completions`,
+`/v1/models` — on port `30000`.
+
+## Deploy on RunPod (quick path, no custom image)
+
+1. Create a **GPU Pod** and pick an **H200 SXM** instance.
+2. Set the **Container Image** to `lmsysorg/sglang:latest`.
+3. Under **Expose HTTP Ports**, add `30000`.
+4. Set the **Container Start Command** to:
+
+   ```
+   python3 -m sglang.launch_server --model-path WhiteRabbitNeo/WhiteRabbitNeo-V3-7B --served-model-name whiterabbitneo-v3 --host 0.0.0.0 --port 30000 --context-length 32768 --mem-fraction-static 0.9 --tp 1
+   ```
+
+5. (Optional) Add a `HF_TOKEN` environment variable for faster/gated downloads, and an
+   `API_KEY` env var plus `--api-key $API_KEY` on the command above to require auth.
+6. Deploy. The first boot downloads the weights (~15 GB); wait for the log line
+   `The server is fired up and ready to roll!`.
+
+RunPod gives the HTTP port a public proxy URL of the form
+`https://<pod-id>-30000.proxy.runpod.net`. That is your API base host.
+
+## Deploy on RunPod (custom image)
+
+Build and push the image in this repo (it bakes in `start.sh`, which reads the env vars below),
+then point the Pod's **Container Image** at it and leave the start command empty:
+
+```bash
+docker build -t <your-registry>/whiterabbitneo-sglang:latest .
+docker push <your-registry>/whiterabbitneo-sglang:latest
+```
+
+## Run locally (own H200 box)
+
+Requires Docker with the NVIDIA Container Toolkit.
+
+```bash
+cp .env.example .env   # edit if you want an API_KEY / HF_TOKEN
+docker compose up
+```
+
+## Call the API
+
+```bash
+curl https://<pod-id>-30000.proxy.runpod.net/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "whiterabbitneo-v3",
+    "messages": [{"role": "user", "content": "Explain a SYN flood in two sentences."}]
+  }'
+```
+
+With the OpenAI SDK:
+
+```bash
+pip install openai
+BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1 python test_api.py
+```
+
+If you set an `API_KEY`, pass it as the OpenAI key / `Authorization: Bearer <key>` header.
+
+## Configuration
+
+`start.sh` and `docker-compose.yml` read these environment variables (see `.env.example`):
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MODEL_PATH` | `WhiteRabbitNeo/WhiteRabbitNeo-V3-7B` | Hugging Face model to serve |
+| `SERVED_MODEL_NAME` | `whiterabbitneo-v3` | Name clients pass as `model` |
+| `PORT` | `30000` | HTTP port |
+| `CONTEXT_LENGTH` | `32768` | Max context window |
+| `MEM_FRACTION_STATIC` | `0.9` | Fraction of VRAM reserved for weights + KV cache |
+| `TP_SIZE` | `1` | Tensor-parallel GPUs (1 is enough on an H200) |
+| `API_KEY` | _(unset)_ | If set, requires `Authorization: Bearer <key>` |
+| `HF_TOKEN` | _(unset)_ | Hugging Face token for gated/faster downloads |
