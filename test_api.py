@@ -1,7 +1,6 @@
 """Smoke-test the OpenAI-compatible endpoint.
 
-    pip install openai
-    python test_api.py
+    uv run --env-file .env test_api.py
 
 Set BASE_URL to your RunPod proxy URL, e.g.
     BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1
@@ -12,7 +11,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url=os.environ.get("BASE_URL", "http://localhost:30000/v1"),
-    api_key=os.environ.get("API_KEY", "EMPTY"),
+    api_key=os.environ.get("API_KEY") or "EMPTY",
 )
 
 resp = client.chat.completions.create(

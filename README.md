@@ -10,7 +10,20 @@ with room to spare for a long-context KV cache.
 Once running, SGLang exposes standard OpenAI routes — `/v1/chat/completions`, `/v1/completions`,
 `/v1/models` — on port `30000`.
 
-## Deploy on RunPod (quick path, no custom image)
+## Deploy on RunPod with Python (uv)
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync
+cp .env.example .env   # set RUNPOD_API_KEY (and optionally API_KEY / HF_TOKEN)
+uv run --env-file .env launch_pod.py
+```
+
+This creates an H200 Secure Cloud pod running `lmsysorg/sglang:latest`, exposes port `30000`,
+caches weights on a volume at `/root/.cache/huggingface`, and prints the `BASE_URL` to call.
+
+## Deploy on RunPod (console, no custom image)
 
 1. Create a **GPU Pod** and pick an **H200 SXM** instance.
 2. Set the **Container Image** to `lmsysorg/sglang:latest`.
@@ -62,8 +75,7 @@ curl https://<pod-id>-30000.proxy.runpod.net/v1/chat/completions \
 With the OpenAI SDK:
 
 ```bash
-pip install openai
-BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1 python test_api.py
+BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1 uv run --env-file .env test_api.py
 ```
 
 If you set an `API_KEY`, pass it as the OpenAI key / `Authorization: Bearer <key>` header.
