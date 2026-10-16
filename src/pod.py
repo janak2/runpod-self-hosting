@@ -17,8 +17,7 @@ def server_command(server: dict) -> str:
             parts.append(f"--{flag}")
         elif value is not False:
             parts.append(f"--{flag} {value}")
-    if os.environ.get("API_KEY"):
-        parts.append(f"--api-key {os.environ['API_KEY']}")
+    parts.append(f"--api-key {os.environ['API_KEY']}")
     return " ".join(parts)
 
 
@@ -76,8 +75,7 @@ def stream_logs(pod_id: str) -> None:
 
 def wait_until_ready(pod_id: str, port: int) -> None:
     """Block until SGLang's /health returns 200 through the Runpod proxy."""
-    api_key = os.environ.get("API_KEY")
-    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    headers = {"Authorization": f"Bearer {os.environ['API_KEY']}"}
     while True:
         try:
             if requests.get(f"{base_url(pod_id, port)}/health", headers=headers, timeout=10).status_code == 200:

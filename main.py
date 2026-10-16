@@ -3,6 +3,8 @@
     uv run main.py [config.yaml]
 """
 import argparse
+import os
+import sys
 import threading
 from pathlib import Path
 
@@ -12,6 +14,8 @@ from dotenv import load_dotenv
 from src.pod import base_url, create_pod, stream_logs, wait_until_ready
 
 load_dotenv()
+if not os.environ.get("API_KEY"):
+    sys.exit("API_KEY must be set in .env")
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("config", nargs="?", default="config.yaml", help="pod and SGLang server config")

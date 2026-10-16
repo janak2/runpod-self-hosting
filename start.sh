@@ -17,11 +17,7 @@ args=(
   --context-length "$CONTEXT_LENGTH"
   --mem-fraction-static "$MEM_FRACTION_STATIC"
   --tp "$TP_SIZE"
+  --api-key "${API_KEY:?API_KEY must be set}"
 )
-
-# Require an API key only when one is provided.
-if [ -n "${API_KEY:-}" ]; then
-  args+=(--api-key "$API_KEY")
-fi
 
 exec python3 -m sglang.launch_server "${args[@]}"

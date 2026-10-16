@@ -14,7 +14,7 @@ load_dotenv()
 
 client = OpenAI(
     base_url=os.environ.get("BASE_URL", "http://localhost:30000/v1"),
-    api_key=os.environ.get("API_KEY") or "EMPTY",
+    api_key=os.environ["API_KEY"],
 )
 
 resp = client.chat.completions.create(

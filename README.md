@@ -16,7 +16,7 @@ Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync
-cp .env.example .env   # set RUNPOD_API_KEY (and optionally API_KEY / HF_TOKEN)
+cp .env.example .env   # set RUNPOD_API_KEY and API_KEY (optionally HF_TOKEN)
 uv run main.py            # uses config.yaml; or: uv run main.py path/to/other.yaml
 ```
 
@@ -37,11 +37,10 @@ To serve another model or GPU layout, copy `config.yaml` and change the `pod` se
 4. Set the **Container Start Command** to:
 
    ```
-   python3 -m sglang.launch_server --model-path WhiteRabbitNeo/WhiteRabbitNeo-V3-7B --served-model-name whiterabbitneo-v3 --host 0.0.0.0 --port 30000 --context-length 32768 --mem-fraction-static 0.9 --tp 1
+   python3 -m sglang.launch_server --model-path WhiteRabbitNeo/WhiteRabbitNeo-V3-7B --served-model-name whiterabbitneo-v3 --host 0.0.0.0 --port 30000 --context-length 32768 --mem-fraction-static 0.9 --tp 1 --api-key YOUR_API_KEY
    ```
 
-5. (Optional) Add a `HF_TOKEN` environment variable for faster/gated downloads, and an
-   `API_KEY` env var plus `--api-key $API_KEY` on the command above to require auth.
+5. (Optional) Add a `HF_TOKEN` environment variable for faster/gated downloads.
 6. Deploy. The first boot downloads the weights (~15 GB); wait for the log line
    `The server is fired up and ready to roll!`.
 
@@ -63,7 +62,7 @@ docker push <your-registry>/whiterabbitneo-sglang:latest
 Requires Docker with the NVIDIA Container Toolkit.
 
 ```bash
-cp .env.example .env   # edit if you want an API_KEY / HF_TOKEN
+cp .env.example .env   # set API_KEY (optionally HF_TOKEN)
 docker compose up
 ```
 
@@ -71,6 +70,7 @@ docker compose up
 
 ```bash
 curl https://<pod-id>-30000.proxy.runpod.net/v1/chat/completions \
+  -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "whiterabbitneo-v3",
@@ -84,7 +84,8 @@ With the OpenAI SDK:
 BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1 uv run src/test_api.py
 ```
 
-If you set an `API_KEY`, pass it as the OpenAI key / `Authorization: Bearer <key>` header.
+`test_api.py` reads `API_KEY` from `.env`; other clients pass it as the OpenAI `api_key` or an
+`Authorization: Bearer <key>` header.
 
 ## Configuration
 
@@ -98,5 +99,5 @@ If you set an `API_KEY`, pass it as the OpenAI key / `Authorization: Bearer <key
 | `CONTEXT_LENGTH` | `32768` | Max context window |
 | `MEM_FRACTION_STATIC` | `0.9` | Fraction of VRAM reserved for weights + KV cache |
 | `TP_SIZE` | `1` | Tensor-parallel GPUs (1 is enough on an H200) |
-| `API_KEY` | _(unset)_ | If set, requires `Authorization: Bearer <key>` |
+| `API_KEY` | _(required)_ | Clients must send `Authorization: Bearer <key>` |
 | `HF_TOKEN` | _(unset)_ | Hugging Face token for gated/faster downloads |
