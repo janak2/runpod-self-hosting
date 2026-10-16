@@ -2572,6 +2572,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "openai" },
     { name = "python-dotenv" },
+    { name = "requests" },
     { name = "runpod" },
 ]
 
@@ -2579,6 +2580,7 @@ dependencies = [
 requires-dist = [
     { name = "openai", specifier = ">=3.31.0" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
+    { name = "requests", specifier = ">=2.34.2" },
     { name = "runpod", specifier = ">=1.12.0" },
 ]
 

@@ -1,6 +1,6 @@
 """Smoke-test the OpenAI-compatible endpoint.
 
-    uv run test_api.py
+    uv run src/test_api.py
 
 Set BASE_URL to your RunPod proxy URL, e.g.
     BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1
