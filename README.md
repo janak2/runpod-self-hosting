@@ -22,8 +22,8 @@ uv run main.py            # uses config.yaml; or: uv run main.py path/to/other.y
 
 This creates the pod described in `config.yaml` (by default an H200 Secure Cloud pod running
 `lmsysorg/sglang:latest` on port `30000`), caches weights on a volume at
-`/root/.cache/huggingface`, streams the pod logs, waits until SGLang's `/health` responds, and
-then prints the `BASE_URL` to call.
+`/root/.cache/huggingface`, and streams the pod logs. Once SGLang's `/health` responds it prints
+the `BASE_URL` to call, and keeps streaming logs until you press Ctrl+C, which stops the pod.
 
 To serve another model or GPU layout, copy `config.yaml` and change the `pod` section (GPU type,
 `gpu_count`, disk sizes) and the SGLang flags under `server.args` (e.g. `gpu_count: 8` with

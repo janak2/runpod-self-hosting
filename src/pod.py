@@ -45,6 +45,10 @@ def create_pod(config: dict) -> str:
     return pod["id"]
 
 
+def stop_pod(pod_id: str) -> None:
+    runpod.stop_pod(pod_id)
+
+
 def base_url(pod_id: str, port: int) -> str:
     return f"https://{pod_id}-{port}.proxy.runpod.net"
 
