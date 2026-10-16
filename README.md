@@ -25,6 +25,11 @@ This creates the pod described in `config.yaml` (by default an H200 Secure Cloud
 `/root/.cache/huggingface`, and streams the pod logs. Once SGLang's `/health` responds it prints
 the `BASE_URL` to call, and keeps streaming logs until you press Ctrl+C, which stops the pod.
 
+Running it again reuses the pod with the same `pod.name` (resuming it if stopped) instead of
+creating a new one, so the cached weights are kept. A reused pod keeps the settings it was
+created with: after changing `config.yaml` or `API_KEY`, terminate the old pod in the Runpod
+console (or change `pod.name`) so a fresh one is created.
+
 To serve another model or GPU layout, copy `config.yaml` and change the `pod` section (GPU type,
 `gpu_count`, disk sizes) and the SGLang flags under `server.args` (e.g. `gpu_count: 8` with
 `tp: 8` for an 8×H200 pod).

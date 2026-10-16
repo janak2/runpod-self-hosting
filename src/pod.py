@@ -21,9 +21,27 @@ def server_command(server: dict) -> str:
     return " ".join(parts)
 
 
+def start_pod(config: dict) -> str:
+    """Resume or attach to the pod named in `config` if it exists, otherwise create it. Returns its ID."""
+    runpod.api_key = os.environ["RUNPOD_API_KEY"]
+    name = config["pod"]["name"]
+    existing = next((p for p in runpod.get_pods() if p["name"] == name), None)
+
+    if existing is None:
+        pod_id = create_pod(config)
+        print(f"Created pod {pod_id}.", flush=True)
+    elif existing["desiredStatus"] == "RUNNING":
+        pod_id = existing["id"]
+        print(f"Pod {pod_id} ({name}) is already running; attaching.", flush=True)
+    else:
+        pod_id = existing["id"]
+        runpod.resume_pod(pod_id, config["pod"]["gpu_count"])
+        print(f"Resumed existing pod {pod_id} ({name}).", flush=True)
+    return pod_id
+
+
 def create_pod(config: dict) -> str:
     """Create the pod described by `config` and return its ID."""
-    runpod.api_key = os.environ["RUNPOD_API_KEY"]
     pod_config = config["pod"]
     server = config["server"]
 

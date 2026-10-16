@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-from src.pod import base_url, create_pod, stop_pod, stream_logs, wait_until_ready
+from src.pod import base_url, start_pod, stop_pod, stream_logs, wait_until_ready
 
 load_dotenv()
 if not os.environ.get("API_KEY"):
@@ -22,8 +22,8 @@ parser.add_argument("config", nargs="?", default="config.yaml", help="pod and SG
 config = yaml.safe_load(Path(parser.parse_args().config).read_text())
 port = config["server"]["port"]
 
-pod_id = create_pod(config)
-print(f"Pod {pod_id} created. Streaming logs; press Ctrl+C to stop the pod.", flush=True)
+pod_id = start_pod(config)
+print("Streaming logs; press Ctrl+C to stop the pod.", flush=True)
 
 
 def announce_ready() -> None:
