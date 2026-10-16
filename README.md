@@ -17,12 +17,17 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```bash
 uv sync
 cp .env.example .env   # set RUNPOD_API_KEY (and optionally API_KEY / HF_TOKEN)
-uv run main.py
+uv run main.py            # uses config.yaml; or: uv run main.py path/to/other.yaml
 ```
 
-This creates an H200 Secure Cloud pod running `lmsysorg/sglang:latest`, exposes port `30000`,
-caches weights on a volume at `/root/.cache/huggingface`, streams the pod logs, waits until
-SGLang's `/health` responds, and then prints the `BASE_URL` to call.
+This creates the pod described in `config.yaml` (by default an H200 Secure Cloud pod running
+`lmsysorg/sglang:latest` on port `30000`), caches weights on a volume at
+`/root/.cache/huggingface`, streams the pod logs, waits until SGLang's `/health` responds, and
+then prints the `BASE_URL` to call.
+
+To serve another model or GPU layout, copy `config.yaml` and change the `pod` section (GPU type,
+`gpu_count`, disk sizes) and the SGLang flags under `server.args` (e.g. `gpu_count: 8` with
+`tp: 8` for an 8×H200 pod).
 
 ## Deploy on RunPod (console, no custom image)
 

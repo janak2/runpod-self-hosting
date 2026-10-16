@@ -1,0 +1,19 @@
+pod:
+  name: whiterabbitneo-sglang
+  image: lmsysorg/sglang:latest
+  gpu_type: NVIDIA H200
+  gpu_count: 1
+  cloud_type: SECURE
+  container_disk_gb: 60
+  volume_gb: 60  # holds the Hugging Face cache, so size it for the model weights
+
+server:
+  port: 30000
+  # Passed to `python3 -m sglang.launch_server`: each key becomes `--key value`,
+  # and `true` becomes a bare `--key` flag. --host/--port are added automatically.
+  args:
+    model-path: WhiteRabbitNeo/WhiteRabbitNeo-V3-7B
+    served-model-name: whiterabbitneo-v3
+    context-length: 32768
+    mem-fraction-static: 0.9
+    tp: 1
