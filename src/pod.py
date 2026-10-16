@@ -1,10 +1,12 @@
 """Create a Runpod pod serving a model via SGLang, stream its logs, and wait for it."""
+import hashlib
 import json
 import os
 import time
 
 import requests
 import runpod
+from runpod.error import QueryError
 
 HF_CACHE_PATH = "/root/.cache/huggingface"
 
@@ -21,22 +23,52 @@ def server_command(server: dict) -> str:
     return " ".join(parts)
 
 
+def config_hash(config: dict) -> str:
+    """Fingerprint of the config and API_KEY, stored on the pod so a later run can tell if either changed."""
+    data = json.dumps(config, sort_keys=True) + os.environ["API_KEY"]
+    return hashlib.sha256(data.encode()).hexdigest()[:16]
+
+
+def confirm(question: str) -> bool:
+    return input(f"{question} [y/N] ").strip().lower() in ("y", "yes")
+
+
+def replace_pod(pod_id: str, config: dict) -> str:
+    """Delete `pod_id` and create a fresh pod from `config`."""
+    runpod.terminate_pod(pod_id)
+    print(f"Deleted pod {pod_id}.", flush=True)
+    return create_pod(config)
+
+
 def start_pod(config: dict) -> str:
-    """Resume or attach to the pod named in `config` if it exists, otherwise create it. Returns its ID."""
+    """Attach to, resume, or create the pod named in `config`, asking before replacing an outdated or unresumable one."""
     runpod.api_key = os.environ["RUNPOD_API_KEY"]
     name = config["pod"]["name"]
     existing = next((p for p in runpod.get_pods() if p["name"] == name), None)
-
     if existing is None:
-        pod_id = create_pod(config)
-        print(f"Created pod {pod_id}.", flush=True)
-    elif existing["desiredStatus"] == "RUNNING":
-        pod_id = existing["id"]
+        return create_pod(config)
+
+    pod_id = existing["id"]
+    if f"CONFIG_HASH={config_hash(config)}" not in (existing["env"] or []):
+        if confirm(
+            f"Pod {pod_id} ({name}) was created with a different config.yaml or API_KEY. "
+            "Delete it (and its cached weights) and create a new one?"
+        ):
+            return replace_pod(pod_id, config)
+        print("Keeping the old pod with its old settings.", flush=True)
+
+    if existing["desiredStatus"] == "RUNNING":
         print(f"Pod {pod_id} ({name}) is already running; attaching.", flush=True)
-    else:
-        pod_id = existing["id"]
-        runpod.resume_pod(pod_id, config["pod"]["gpu_count"])
-        print(f"Resumed existing pod {pod_id} ({name}).", flush=True)
+        return pod_id
+
+    try:
+        runpod.resume_pod(pod_id, existing["gpuCount"])
+    except QueryError as e:
+        print(f"Could not resume pod {pod_id}: {e}", flush=True)
+        if not confirm("Delete it and create a new one?"):
+            raise SystemExit(1)
+        return replace_pod(pod_id, config)
+    print(f"Resumed existing pod {pod_id} ({name}).", flush=True)
     return pod_id
 
 
@@ -45,7 +77,9 @@ def create_pod(config: dict) -> str:
     pod_config = config["pod"]
     server = config["server"]
 
-    env = {"HF_TOKEN": os.environ["HF_TOKEN"]} if os.environ.get("HF_TOKEN") else None
+    env = {"CONFIG_HASH": config_hash(config)}
+    if os.environ.get("HF_TOKEN"):
+        env["HF_TOKEN"] = os.environ["HF_TOKEN"]
 
     pod = runpod.create_pod(
         name=pod_config["name"],
@@ -60,6 +94,7 @@ def create_pod(config: dict) -> str:
         docker_args=server_command(server),
         env=env,
     )
+    print(f"Created pod {pod['id']}.", flush=True)
     return pod["id"]
 
 
