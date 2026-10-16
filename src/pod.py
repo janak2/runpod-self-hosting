@@ -155,8 +155,13 @@ def base_url(pod_id: str, port: int) -> str:
 
 
 def stream_logs(pod_id: str) -> None:
-    """Print the pod's container and system logs forever, resuming where it left off if the stream drops."""
+    """Print the pod's container and system logs forever, resuming where it left off if the stream drops.
+
+    Consecutive identical lines (e.g. Docker's per-tick "Extracting" events) are collapsed into one
+    line whose repeat count is rewritten in place.
+    """
     headers = auth_headers()
+    last, count = None, 0
     while True:
         try:
             with requests.get(
@@ -172,7 +177,14 @@ def stream_logs(pod_id: str) -> None:
                         headers["Last-Event-ID"] = line[3:].strip()
                     elif line.startswith("data:"):
                         event = json.loads(line[5:])
-                        print(f"[{event['source']}] {event['line']}", flush=True)
+                        text = f"[{event['source']}] {event['line']}"
+                        # The current line is left unterminated so a repeat can redraw it with \r.
+                        if text == last:
+                            count += 1
+                            print(f"\r{text} (x{count})", end="", flush=True)
+                        else:
+                            print(text if last is None else f"\n{text}", end="", flush=True)
+                            last, count = text, 1
         except requests.RequestException:
             pass
         time.sleep(5)
