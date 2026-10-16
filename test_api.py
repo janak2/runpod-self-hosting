@@ -1,13 +1,16 @@
 """Smoke-test the OpenAI-compatible endpoint.
 
-    uv run --env-file .env test_api.py
+    uv run test_api.py
 
 Set BASE_URL to your RunPod proxy URL, e.g.
     BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1
 """
 import os
 
+from dotenv import load_dotenv
 from openai import OpenAI
+
+load_dotenv()
 
 client = OpenAI(
     base_url=os.environ.get("BASE_URL", "http://localhost:30000/v1"),

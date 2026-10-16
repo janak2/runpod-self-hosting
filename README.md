@@ -17,7 +17,7 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```bash
 uv sync
 cp .env.example .env   # set RUNPOD_API_KEY (and optionally API_KEY / HF_TOKEN)
-uv run --env-file .env launch_pod.py
+uv run launch_pod.py
 ```
 
 This creates an H200 Secure Cloud pod running `lmsysorg/sglang:latest`, exposes port `30000`,
@@ -75,7 +75,7 @@ curl https://<pod-id>-30000.proxy.runpod.net/v1/chat/completions \
 With the OpenAI SDK:
 
 ```bash
-BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1 uv run --env-file .env test_api.py
+BASE_URL=https://<pod-id>-30000.proxy.runpod.net/v1 uv run test_api.py
 ```
 
 If you set an `API_KEY`, pass it as the OpenAI key / `Authorization: Bearer <key>` header.

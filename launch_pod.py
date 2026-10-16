@@ -1,10 +1,13 @@
 """Launch a Runpod H200 pod serving WhiteRabbitNeo V3 via SGLang's OpenAI-compatible API.
 
-    uv run --env-file .env launch_pod.py
+    uv run launch_pod.py
 """
 import os
 
 import runpod
+from dotenv import load_dotenv
+
+load_dotenv()
 
 runpod.api_key = os.environ["RUNPOD_API_KEY"]
 
