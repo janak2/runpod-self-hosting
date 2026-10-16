@@ -88,7 +88,7 @@ If you set an `API_KEY`, pass it as the OpenAI key / `Authorization: Bearer <key
 
 ## Configuration
 
-`start.sh` and `docker-compose.yml` read these environment variables (see `.env.example`):
+`start.sh` and `docker-compose.yml` read these environment variables:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
