@@ -17,3 +17,5 @@ server:
     context-length: 32768
     mem-fraction-static: 0.9
     tp: 1
+    # WhiteRabbitNeo is Qwen2.5-based; this turns generated tool syntax into API tool-call objects.
+    tool-call-parser: qwen

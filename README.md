@@ -7,8 +7,8 @@ WhiteRabbitNeo-V3-7B is a Qwen2.5-Coder-7B–based cybersecurity model with a 32
 (Apache-2.0). It weighs ~15 GB in bf16, so a single H200 (141 GB) runs it comfortably at `--tp 1`
 with room to spare for a long-context KV cache.
 
-Once running, SGLang exposes standard OpenAI routes — `/v1/chat/completions`, `/v1/completions`,
-`/v1/models` — on port `30000`.
+Once running, SGLang exposes OpenAI Chat Completions (`/v1/chat/completions`), OpenAI Responses
+(`/v1/responses`), and Anthropic Messages (`/v1/messages`) on port `30000`.
 
 ## Deploy on RunPod with Python (uv)
 
@@ -34,6 +34,24 @@ a change to `gpu_type`, `gpu_count`, `cloud_type` or `volume_gb`, or a pod that 
 To serve another model or GPU layout, copy `config.yaml` and change the `pod` section (GPU type,
 `gpu_count`, disk sizes) and the SGLang flags under `server.args` (e.g. `gpu_count: 8` with
 `tp: 8` for an 8×H200 pod).
+
+## Test all agent APIs
+
+With the pod running, test a forced function call through all three protocols:
+
+```bash
+uv run src/test_endpoints.py
+```
+
+The script discovers the running pod from `config.yaml`. You can instead pass any SGLang URL,
+with or without `/v1`:
+
+```bash
+uv run src/test_endpoints.py https://<pod-id>-30000.proxy.runpod.net/v1
+```
+
+Each test passes only if the response contains a structured `get_weather({"city":"Paris"})` tool
+call—not merely an HTTP 200 or plain-text imitation.
 
 ## Deploy on RunPod (console, no custom image)
 
