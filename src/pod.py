@@ -113,13 +113,15 @@ def start_pod(config: dict) -> str:
         print(f"Pod {pod_id} ({name}) is already running; attaching.", flush=True)
         return pod_id
 
-    try:
-        runpod.resume_pod(pod_id, existing["gpuCount"])
-    except QueryError as e:
-        print(f"Could not resume pod {pod_id}: {e}", flush=True)
-        if not confirm("Delete it and create a new one?"):
-            raise SystemExit(1)
-        return replace_pod(pod_id, config)
+    while True:
+        try:
+            runpod.resume_pod(pod_id, existing["gpuCount"])
+            break
+        except QueryError as e:
+            # Usually "not enough free GPUs on the host": wait for capacity, or move to a new host.
+            print(f"Could not resume pod {pod_id}: {e}", flush=True)
+            if input("Retry resume (r) or delete and create a new pod (d)? [r/d] ").strip().lower().startswith("d"):
+                return replace_pod(pod_id, config)
     print(f"Resumed existing pod {pod_id} ({name}).", flush=True)
     return pod_id
 
